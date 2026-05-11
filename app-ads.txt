@@ -123,14 +123,10 @@ sharethrough.com, 5828-OB, RESELLER, d53b998a7bd4ecd2
 sharethrough.com, r9b1mg7e, RESELLER, d53b998a7bd4ecd2
 sharethrough.com, ibazay96, RESELLER, d53b998a7bd4ecd2
 sharethrough.com, 5828, RESELLER, d53b998a7bd4ecd2
-sharethrough.com, bxzzb1br, RESELLER, d53b998a7bd4ecd2
-sharethrough.com, bc6d1whs, RESELLER, d53b998a7bd4ecd2
 sharethrough.com, ftvct81v, RESELLER
 risecodes.com, 68d54e2fe125150001dd91e2, RESELLER
 media.net, 8cu5l226o, RESELLER
-media.net, 8cu12aq1y, RESELLER
 media.net, 8cu355vs4, RESELLER
-media.net, 8cu9b72o6, RESELLER
 themediagrid.com, ws2d8n, RESELLER, 35d5010d7789b49d
 voisetech.com, 1066, RESELLER
 blueseasx.com, 203625, RESELLER
