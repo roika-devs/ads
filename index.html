@@ -991,8 +991,13 @@
 
 <!-- FOOTER -->
 <footer>
-  <p>© 2019-2026 ROIKA · ALL RIGHTS RESERVED</p>
-  <p>MADE WITH <span class="heart">♥</span> AND MANY PIXELS</p>
+    <p>© 2019-2026 ROIKA · ALL RIGHTS RESERVED</p>
+
+    <div class="footer-links">
+        <a href="darkrise-privacy-policy.html">PRIVACY POLICY</a>
+    </div>
+
+    <p>MADE WITH <span class="heart">♥</span> AND MANY PIXELS</p>
 </footer>
 
 <!-- LIGHTBOX -->
@@ -1004,6 +1009,7 @@
 
 <script>
   // ─── TAB SWITCHER ───
+    // v1 - Original
     function switchTab(name)
     {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -1012,6 +1018,25 @@
         document.querySelector(`[data-tab="${name}"]`).classList.add('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
+
+    // v2
+    /*function switchTab(tabName) {
+
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        document.querySelectorAll('nav a').forEach(btn => {
+            btn.classList.remove('active');
+        });
+
+        document.getElementById('tab-' + tabName).classList.add('active');
+
+        document.querySelector(`[data-tab="${tabName}"]`)
+            ?.classList.add('active');
+
+        window.location.hash = tabName;
+    }*/
 
   // ─── LIGHTBOX ───
     function openLightbox(src)
@@ -1027,6 +1052,15 @@
     }
 
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    window.addEventListener('load', () => {
+
+        const hash = window.location.hash.replace('#', '');
+
+        if (hash) {
+            switchTab(hash);
+        }
+    });
 
   // ─── PLACEHOLDER ───
     function showPlaceholderMsg() {
