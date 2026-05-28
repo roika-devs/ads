@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Roika — Darkrise</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0a0a0f;
+    --surface:   #111118;
+    --border:    #2a2a3a;
+    --gold:      #c9a84c;
+    --gold-dim:  #7a6130;
+    --red:       #b83232;
+    --text:      #d4cfc4;
+    --text-dim:  #6b6560;
+    --pixel:     'Press Start 2P', monospace;
+    --vt:        'VT323', monospace;
+    --serif:     'Crimson Text', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--serif);
+    font-size: 18px;
+    min-height: 100vh;
+    image-rendering: pixelated;
+  }
+
+  /* ─── SCANLINE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ─── PIXEL NOISE BG ─── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9998;
+    opacity: 0.4;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,15,0.95);
+    border-bottom: 2px solid var(--border);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: var(--pixel);
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    text-shadow: 0 0 12px rgba(201,168,76,0.5);
+    text-decoration: none;
+    cursor: pointer;
+  }
+  .logo span { color: var(--text-dim); font-size: 7px; display: block; margin-top: 2px; }
+
+  nav { display: flex; gap: 0; }
+
+  nav button {
+    font-family: var(--pixel);
+    font-size: 7px;
+    letter-spacing: 1px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    padding: 0 1.2rem;
+    height: 60px;
+    transition: color .2s, border-color .2s;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active {
+    color: var(--gold);
+    border-bottom-color: var(--gold);
+  }
+
+  .discord-btn {
+    font-family: var(--pixel);
+    font-size: 7px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .discord-btn:hover {
+    border-color: #5865F2;
+    color: #8891f8;
+    box-shadow: 0 0 10px rgba(88,101,242,0.3);
+  }
+
+  /* ─── TABS ─── */
+  .tab { display: none; animation: fadein .3s ease; }
+  .tab.active { display: block; }
+
+  @keyframes fadein {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── DARKRISE TAB ─── */
+  .hero {
+    position: relative;
+    min-height: 88vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 4rem 2rem;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 110%, rgba(184,50,50,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 40% at 50% -10%, rgba(201,168,76,0.07) 0%, transparent 60%),
+      var(--bg);
+  }
+
+  .hero-content { position: relative; z-index: 1; text-align: center; max-width: 700px; }
+
+  .game-title {
+    font-family: var(--pixel);
+    font-size: clamp(24px, 5vw, 52px);
+    color: var(--gold);
+    text-shadow:
+      4px 4px 0 rgba(184,50,50,0.6),
+      0 0 40px rgba(201,168,76,0.4);
+    line-height: 1.3;
+    margin-bottom: 0.5rem;
+    animation: glow 3s ease-in-out infinite alternate;
+  }
+
+  @keyframes glow {
+    from { text-shadow: 4px 4px 0 rgba(184,50,50,0.6), 0 0 20px rgba(201,168,76,0.3); }
+    to   { text-shadow: 4px 4px 0 rgba(184,50,50,0.8), 0 0 60px rgba(201,168,76,0.6); }
+  }
+
+  .game-sub {
+    font-family: var(--vt);
+    font-size: 22px;
+    color: var(--text-dim);
+    letter-spacing: 4px;
+    margin-bottom: 2.5rem;
+  }
+
+  /* video wrapper */
+  .video-wrap {
+    width: 100%;
+    max-width: 660px;
+    margin: 0 auto 2.5rem;
+    border: 2px solid var(--border);
+    box-shadow: 0 0 40px rgba(201,168,76,0.1), inset 0 0 20px rgba(0,0,0,0.5);
+    position: relative;
+    background: #000;
+    aspect-ratio: 16/9;
+  }
+  .video-wrap::before {
+    content: '';
+    position: absolute; inset: -4px;
+    border: 1px solid var(--gold-dim);
+    opacity: 0.4;
+    pointer-events: none;
+  }
+  .video-wrap iframe,
+  .video-wrap video {
+    width: 100%; height: 100%;
+    border: none;
+    display: block;
+  }
+
+  .video-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 1rem;
+    color: var(--text-dim);
+    font-family: var(--pixel);
+    font-size: 8px;
+    cursor: pointer;
+  }
+  .video-placeholder .play-icon {
+    width: 48px; height: 48px;
+    border: 2px solid var(--gold-dim);
+    display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .video-placeholder:hover .play-icon {
+    border-color: var(--gold);
+    box-shadow: 0 0 20px rgba(201,168,76,0.3);
+  }
+  .video-placeholder .play-icon::after {
+    content: '';
+    width: 0; height: 0;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    border-left: 16px solid var(--gold);
+    margin-left: 4px;
+  }
+
+  /* lore block */
+  .lore {
+    max-width: 580px;
+    margin: 0 auto 2.5rem;
+    text-align: left;
+    border-left: 3px solid var(--gold-dim);
+    padding-left: 1.5rem;
+  }
+  .lore-label {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--gold-dim);
+    letter-spacing: 3px;
+    margin-bottom: 0.75rem;
+  }
+  .lore p {
+    font-size: 17px;
+    line-height: 1.75;
+    color: var(--text);
+    font-style: italic;
+  }
+  .lore p + p { margin-top: 0.75rem; }
+
+  /* store buttons */
+  .store-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+
+  .store-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 2px solid var(--border);
+    padding: 10px 20px;
+    text-decoration: none;
+    transition: all .25s;
+    background: rgba(255,255,255,0.02);
+    position: relative;
+    overflow: hidden;
+  }
+  .store-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(201,168,76,0.05));
+    opacity: 0;
+    transition: opacity .2s;
+  }
+  .store-btn:hover::before { opacity: 1; }
+  .store-btn:hover {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 20px rgba(201,168,76,0.15);
+    transform: translateY(-2px);
+  }
+  .store-btn svg { flex-shrink: 0; }
+  .store-btn-text { text-align: left; }
+  .store-btn-text small {
+    display: block;
+    font-family: var(--pixel);
+    font-size: 6px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+  .store-btn-text strong {
+    display: block;
+    font-family: var(--vt);
+    font-size: 20px;
+    color: var(--text);
+    letter-spacing: 1px;
+    font-weight: normal;
+  }
+
+  /* ─── GALLERY TAB ─── */
+  .tab-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+  }
+
+  .tab-heading {
+    font-family: var(--pixel);
+    font-size: 12px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 0.5rem;
+  }
+  .tab-heading-line {
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold-dim), transparent);
+    margin-bottom: 3rem;
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 4px;
+  }
+
+  .gallery-item {
+    aspect-ratio: 16/9;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--text-dim);
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .gallery-item:hover { border-color: var(--gold-dim); }
+  .gallery-item img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    display: block;
+  }
+  .gallery-item .overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.7);
+    opacity: 0;
+    transition: opacity .2s;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+  .gallery-item:hover .overlay { opacity: 1; }
+
+  .gallery-placeholder-icon {
+    font-size: 24px;
+    display: block;
+    margin-bottom: 8px;
+    opacity: 0.3;
+  }
+
+  /* ─── PATCH NOTES TAB ─── */
+  .patch-list { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .patch-item {
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 1.5rem 2rem;
+    position: relative;
+    transition: border-color .2s;
+  }
+  .patch-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--gold-dim);
+  }
+  .patch-item:hover { border-color: var(--gold-dim); }
+  .patch-item.latest::before { background: var(--gold); }
+
+  .patch-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .patch-ver {
+    font-family: var(--pixel);
+    font-size: 9px;
+    color: var(--gold);
+  }
+  .patch-date {
+    font-family: var(--vt);
+    font-size: 18px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+  }
+  .patch-tag {
+    font-family: var(--pixel);
+    font-size: 6px;
+    padding: 2px 8px;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    letter-spacing: 1px;
+  }
+
+  .patch-section-title {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    margin: 0.75rem 0 0.4rem;
+    text-transform: uppercase;
+  }
+
+  .patch-item ul {
+    list-style: none;
+    padding: 0;
+  }
+  .patch-item ul li {
+    padding: 3px 0 3px 1.2rem;
+    position: relative;
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .patch-item ul li::before {
+    content: '▸';
+    position: absolute; left: 0;
+    color: var(--gold-dim);
+    font-size: 12px;
+  }
+
+  .patch-empty {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 3rem;
+    border: 1px dashed var(--border);
+  }
+
+  /* ─── ABOUT TAB ─── */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+  @media (max-width: 700px) { .about-grid { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .about-text h2 {
+    font-family: var(--pixel);
+    font-size: 10px;
+    color: var(--gold);
+    letter-spacing: 2px;
+    margin-bottom: 1.5rem;
+  }
+  .about-text p {
+    font-size: 17px;
+    line-height: 1.8;
+    color: var(--text);
+    margin-bottom: 1rem;
+  }
+  .about-text p em { color: var(--gold); font-style: normal; }
+
+  .about-photo {
+    border: 2px solid var(--border);
+    aspect-ratio: 1;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--text-dim);
+    text-align: center;
+    padding: 2rem;
+    line-height: 2;
+    position: relative;
+    overflow: hidden;
+  }
+  .about-photo::after {
+    content: '';
+    position: absolute; inset: 4px;
+    border: 1px dashed var(--border);
+    pointer-events: none;
+  }
+  .about-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    image-rendering: pixelated;
+    position: absolute; inset: 0;
+  }
+
+  .social-row {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .social-link {
+    font-family: var(--pixel);
+    font-size: 7px;
+    color: var(--text-dim);
+    text-decoration: none;
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    letter-spacing: 1px;
+    display: flex; align-items: center; gap: 8px;
+    transition: all .2s;
+  }
+  .social-link:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer p {
+    font-family: var(--pixel);
+    font-size: 6px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+  /* ─── LIGHTBOX ─── */
+  #lightbox {
+    display: none;
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(0,0,0,0.9);
+    align-items: center; justify-content: center;
+  }
+  #lightbox.open { display: flex; }
+  #lightbox img {
+    max-width: 90vw; max-height: 90vh;
+    image-rendering: pixelated;
+    border: 2px solid var(--border);
+  }
+  #lightbox-close {
+    position: absolute; top: 1rem; right: 1.5rem;
+    font-family: var(--pixel);
+    font-size: 10px;
+    color: var(--text-dim);
+    cursor: pointer;
+    background: none; border: none;
+    transition: color .2s;
+  }
+  #lightbox-close:hover { color: var(--gold); }
+
+  /* ─── PIXEL DECORATION ─── */
+  .pixel-divider {
+    font-family: var(--pixel);
+    font-size: 8px;
+    color: var(--border);
+    letter-spacing: 4px;
+    text-align: center;
+    padding: 1rem 0;
+    overflow: hidden;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 600px) {
+    header { padding: 0 1rem; }
+    nav button { padding: 0 0.6rem; font-size: 6px; }
+    .game-title { font-size: 22px; }
+    .tab-inner { padding: 2rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" onclick="switchTab('darkrise')">
+    ROIKA
+    <span>GAME STUDIO</span>
+  </a>
+
+  <nav>
+    <button class="active" onclick="switchTab('darkrise')" data-tab="darkrise">DARKRISE</button>
+    <button onclick="switchTab('gallery')" data-tab="gallery">GALLERY</button>
+    <button onclick="switchTab('patches')" data-tab="patches">PATCH NOTES</button>
+    <button onclick="switchTab('about')" data-tab="about">ABOUT US</button>
+  </nav>
+
+  <a class="discord-btn" href="YOUR_DISCORD_LINK_HERE" target="_blank" rel="noopener">
+    <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
+      <path d="M11.86 1.05A11.53 11.53 0 0 0 9.06 0c-.13.22-.27.52-.37.76a10.7 10.7 0 0 0-3.38 0C5.21.52 5.07.22 4.94 0A11.56 11.56 0 0 0 2.14 1.05 12.27 12.27 0 0 0 0 8.57 11.59 11.59 0 0 0 3.54 10a8.8 8.8 0 0 0 .76-1.24 7.56 7.56 0 0 1-1.2-.58l.29-.23a8.27 8.27 0 0 0 7.22 0l.29.23a7.6 7.6 0 0 1-1.2.58A8.8 8.8 0 0 0 10.46 10 11.6 11.6 0 0 0 14 8.57a12.23 12.23 0 0 0-2.14-7.52ZM4.68 7.02c-.73 0-1.32-.67-1.32-1.5s.58-1.5 1.32-1.5c.73 0 1.33.67 1.32 1.5 0 .83-.59 1.5-1.32 1.5Zm4.64 0c-.73 0-1.32-.67-1.32-1.5s.58-1.5 1.32-1.5c.73 0 1.33.67 1.32 1.5 0 .83-.59 1.5-1.32 1.5Z"/>
+    </svg>
+    DISCORD
+  </a>
+</header>
+
+
+<!-- ══════════════════════════════════════════
+     TAB: DARKRISE
+══════════════════════════════════════════ -->
+<div class="tab active" id="tab-darkrise">
+
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+
+      <div class="game-title">DARKRISE</div>
+      <div class="game-sub">PIXEL ACTION RPG</div>
+
+      <!-- VIDEO — replace src with your YouTube embed or video file -->
+      <div class="video-wrap">
+        <!--
+          OPTION A — YouTube:
+          <iframe src="https://www.youtube.com/embed/YOUR_VIDEO_ID?rel=0&modestbranding=1" allowfullscreen></iframe>
+
+          OPTION B — local/hosted video:
+          <video controls poster="poster.png">
+            <source src="darkrise-trailer.mp4" type="video/mp4">
+          </video>
+
+          For now showing placeholder:
+        -->
+        <div class="video-placeholder" id="videoPlaceholder">
+          <div class="play-icon"></div>
+          <span>ADD VIDEO HERE</span>
+          <span style="font-size:6px; margin-top:4px; color:var(--text-dim)">YouTube embed or local file</span>
+        </div>
+      </div>
+
+      <!-- LORE -->
+      <div class="lore">
+        <div class="lore-label">// LORE</div>
+        <p>
+          The world has fallen into shadow. Ancient seals shattered, the dark ones pour through the veil —
+          and only one warrior stands between the abyss and what remains of the light.
+        </p>
+        <p>
+          Forge your path through cursed dungeons, wield legendary weapons, and uncover the truth
+          buried beneath centuries of ruin. Every pixel hides a secret. Every battle forges a legend.
+        </p>
+      </div>
+      <!-- ↑ Edit this lore text as you like -->
+
+      <div class="pixel-divider">· · · · · · · · · · · · · · ·</div>
+
+      <!-- STORE BUTTONS -->
+      <div class="store-buttons">
+        <a class="store-btn"
+           href="https://play.google.com/store/apps/details?id=com.Roika.Darkrise&hl=en_GB&utm_source=website&utm_medium=darkrise_tab&utm_campaign=darkrise_launch"
+           target="_blank" rel="noopener">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M3.18 1 13.36 11.18 3.18 21.36A2 2 0 0 1 2 19.54V2.46A2 2 0 0 1 3.18 1Z" fill="#ea4335"/>
+            <path d="M16.54 7.82 5.04 1.46 14.18 10.6l2.36-2.78Z" fill="#fbbc04"/>
+            <path d="M16.54 14.54l-2.36-2.78-9.14 9.14 11.5-6.36Z" fill="#34a853"/>
+            <path d="M21 10.06l-4.46-2.5-2.36 2.44 2.36 2.44L21 13.94A2 2 0 0 0 21 10.06Z" fill="#4285f4"/>
+          </svg>
+          <div class="store-btn-text">
+            <small>GET IT ON</small>
+            <strong>Google Play</strong>
+          </div>
+        </a>
+
+        <a class="store-btn"
+           href="https://apps.apple.com/us/app/darkrise-pixel-action-rpg/id1579399020?utm_source=website&utm_medium=darkrise_tab&utm_campaign=darkrise_launch"
+           target="_blank" rel="noopener">
+          <svg width="22" height="24" viewBox="0 0 22 24" fill="var(--text)">
+            <path d="M18.02 12.7c-.03-3.24 2.65-4.8 2.77-4.88-1.51-2.2-3.86-2.5-4.7-2.54-2-.2-3.92 1.18-4.93 1.18-1.02 0-2.6-1.15-4.27-1.12-2.2.03-4.23 1.28-5.36 3.24-2.3 3.98-.59 9.87 1.65 13.1 1.1 1.58 2.4 3.36 4.11 3.3 1.65-.07 2.28-1.07 4.27-1.07 2 0 2.57 1.07 4.32 1.04 1.78-.03 2.9-1.61 3.99-3.2a14.7 14.7 0 0 0 1.81-3.7c-.04-.01-3.66-1.4-3.7-5.35Zm-3.46-9.83C15.56 1.6 16.36 0 16.27 0c-.07 0-2.05.14-3.3 1.56-.97 1.08-1.88 2.8-1.64 4.45 1.83.14 3.7-1.02 4.53-2.14Z"/>
+          </svg>
+          <div class="store-btn-text">
+            <small>DOWNLOAD ON THE</small>
+            <strong>App Store</strong>
+          </div>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     TAB: GALLERY
+══════════════════════════════════════════ -->
+<div class="tab" id="tab-gallery">
+  <div class="tab-inner">
+    <div class="tab-heading">GALLERY</div>
+    <div class="tab-heading-line"></div>
+
+    <!--
+      HOW TO ADD SCREENSHOTS:
+      Replace each gallery-item div with:
+
+      <div class="gallery-item" onclick="openLightbox('your-image.png')">
+        <img src="your-image.png" alt="Screenshot">
+        <div class="overlay">VIEW</div>
+      </div>
+
+      For now showing placeholders — swap when you have pixel art/screenshots ready:
+    -->
+    <div class="gallery-grid">
+      <div class="gallery-item" onclick="showPlaceholderMsg()">
+        <span class="gallery-placeholder-icon">🗡️</span>
+        <span>screenshot_01.png</span>
+        <div class="overlay">ADD IMAGE</div>
+      </div>
+      <div class="gallery-item" onclick="showPlaceholderMsg()">
+        <span class="gallery-placeholder-icon">🏰</span>
+        <span>screenshot_02.png</span>
+        <div class="overlay">ADD IMAGE</div>
+      </div>
+      <div class="gallery-item" onclick="showPlaceholderMsg()">
+        <span class="gallery-placeholder-icon">💀</span>
+        <span>screenshot_03.png</span>
+        <div class="overlay">ADD IMAGE</div>
+      </div>
+      <div class="gallery-item" onclick="showPlaceholderMsg()">
+        <span class="gallery-placeholder-icon">⚔️</span>
+        <span>screenshot_04.png</span>
+        <div class="overlay">ADD IMAGE</div>
+      </div>
+      <div class="gallery-item" onclick="showPlaceholderMsg()">
+        <span class="gallery-placeholder-icon">🧙</span>
+        <span>screenshot_05.png</span>
+        <div class="overlay">ADD IMAGE</div>
+      </div>
+      <div class="gallery-item" onclick="showPlaceholderMsg()">
+        <span class="gallery-placeholder-icon">🗺️</span>
+        <span>screenshot_06.png</span>
+        <div class="overlay">ADD IMAGE</div>
+      </div>
+    </div>
+    <!-- Add more gallery-item divs above as needed -->
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     TAB: PATCH NOTES
+══════════════════════════════════════════ -->
+<div class="tab" id="tab-patches">
+  <div class="tab-inner">
+    <div class="tab-heading">PATCH NOTES</div>
+    <div class="tab-heading-line"></div>
+
+    <!--
+      HOW TO ADD PATCH NOTES:
+      Copy a .patch-item block, edit version/date/changes.
+      First/latest patch should have class="patch-item latest"
+    -->
+    <div class="patch-list">
+
+      <div class="patch-item latest">
+        <div class="patch-header">
+          <span class="patch-ver">v1.0.0</span>
+          <span class="patch-date">2025 · INITIAL RELEASE</span>
+          <span class="patch-tag">LATEST</span>
+        </div>
+        <div class="patch-section-title">NEW</div>
+        <ul>
+          <li>Game released on Google Play and App Store</li>
+          <li>Add your patch notes here...</li>
+        </ul>
+      </div>
+
+      <!-- Example of an older patch (remove or keep as template):
+      <div class="patch-item">
+        <div class="patch-header">
+          <span class="patch-ver">v0.9.0</span>
+          <span class="patch-date">2025 · BETA</span>
+        </div>
+        <div class="patch-section-title">CHANGES</div>
+        <ul>
+          <li>Beta testing phase</li>
+        </ul>
+        <div class="patch-section-title">FIXES</div>
+        <ul>
+          <li>Various bug fixes</li>
+        </ul>
+      </div>
+      -->
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     TAB: ABOUT US
+══════════════════════════════════════════ -->
+<div class="tab" id="tab-about">
+  <div class="tab-inner">
+    <div class="tab-heading">ABOUT US</div>
+    <div class="tab-heading-line"></div>
+
+    <div class="about-grid">
+      <div class="about-text">
+        <h2>// ROIKA</h2>
+        <p>
+          We are <em>Roika</em> — a small indie studio with big ideas and a love for pixel art.
+        </p>
+        <p>
+          <!-- Edit this text about your team: -->
+          [Your story here — how many people, where you're from, how the studio started, what drives you.]
+        </p>
+        <p>
+          Darkrise is our passion project: a pixel action RPG built for those who remember
+          when games were tough, atmospheric, and endlessly replayable.
+        </p>
+        <p>
+          We read every message from our players. Come say hi on Discord — we're friendly,
+          we promise.
+        </p>
+
+        <div class="social-row">
+          <a class="social-link" href="YOUR_DISCORD_LINK_HERE" target="_blank" rel="noopener">
+            <svg width="14" height="10" viewBox="0 0 14 10" fill="currentColor">
+              <path d="M11.86 1.05A11.53 11.53 0 0 0 9.06 0c-.13.22-.27.52-.37.76a10.7 10.7 0 0 0-3.38 0C5.21.52 5.07.22 4.94 0A11.56 11.56 0 0 0 2.14 1.05 12.27 12.27 0 0 0 0 8.57 11.59 11.59 0 0 0 3.54 10a8.8 8.8 0 0 0 .76-1.24 7.56 7.56 0 0 1-1.2-.58l.29-.23a8.27 8.27 0 0 0 7.22 0l.29.23a7.6 7.6 0 0 1-1.2.58A8.8 8.8 0 0 0 10.46 10 11.6 11.6 0 0 0 14 8.57a12.23 12.23 0 0 0-2.14-7.52ZM4.68 7.02c-.73 0-1.32-.67-1.32-1.5s.58-1.5 1.32-1.5c.73 0 1.33.67 1.32 1.5 0 .83-.59 1.5-1.32 1.5Zm4.64 0c-.73 0-1.32-.67-1.32-1.5s.58-1.5 1.32-1.5c.73 0 1.33.67 1.32 1.5 0 .83-.59 1.5-1.32 1.5Z"/>
+            </svg>
+            DISCORD
+          </a>
+          <a class="social-link"
+             href="https://play.google.com/store/apps/details?id=com.Roika.Darkrise&utm_source=website&utm_medium=about_tab&utm_campaign=about_us"
+             target="_blank" rel="noopener">GOOGLE PLAY</a>
+          <a class="social-link"
+             href="https://apps.apple.com/us/app/darkrise-pixel-action-rpg/id1579399020?utm_source=website&utm_medium=about_tab&utm_campaign=about_us"
+             target="_blank" rel="noopener">APP STORE</a>
+        </div>
+      </div>
+
+      <!-- TEAM PHOTO — replace src with your actual photo -->
+      <div class="about-photo">
+        <!--
+          TO ADD PHOTO:
+          <img src="team.jpg" alt="Roika team">
+        -->
+        <span>
+          PLACE YOUR<br>TEAM PHOTO<br>HERE<br><br>
+          team.jpg
+        </span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 ROIKA · ALL RIGHTS RESERVED</p>
+  <p>MADE WITH ♥ AND MANY PIXELS</p>
+</footer>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()">
+  <button id="lightbox-close" onclick="closeLightbox()">✕ CLOSE</button>
+  <img id="lightbox-img" src="" alt="">
+</div>
+
+
+<script>
+  // ─── TAB SWITCHER ───
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.querySelector(`[data-tab="${name}"]`).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ─── LIGHTBOX ───
+  function openLightbox(src) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  // ─── PLACEHOLDER ───
+  function showPlaceholderMsg() {
+    // Just a dev hint — remove this function when you have real screenshots
+    console.log('Replace this gallery-item with your actual screenshot!');
+  }
+</script>
+
+</body>
+</html>
